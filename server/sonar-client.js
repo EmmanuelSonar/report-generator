@@ -22,21 +22,19 @@ async function fetchScaRiskReport(config, fetchImpl = fetch) {
 async function fetchMeasuresHistory(config, fromDate, fetchImpl = fetch) {
   const result = {};
   let page = 1;
-  let total = Infinity;
-  let seen = 0;
-  while (seen < total) {
+  while (true) {
     const data = await getJson(measuresHistoryUrl(config, fromDate, page), config.token, fetchImpl);
-    const pageSize = data.paging ? data.paging.pageSize : 0;
-    total = data.paging ? data.paging.total : 0;
-    for (const m of data.measures || []) {
+    const measures = data.measures || [];
+    for (const m of measures) {
       result[m.metric] = result[m.metric] || [];
       for (const h of m.history || []) {
         result[m.metric].push({ date: h.date, value: Number(h.value) });
       }
     }
-    // search_history paging counts measures*history rows; advance by page until covered.
-    seen += pageSize || (data.measures ? data.measures.length : 0);
-    if (!pageSize || (data.measures || []).length === 0) break;
+    const paging = data.paging;
+    if (!paging || !paging.pageSize || measures.length === 0 || paging.pageIndex * paging.pageSize >= paging.total) {
+      break;
+    }
     page += 1;
   }
   return result;

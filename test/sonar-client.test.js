@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
-const { fetchMeasuresHistory, fetchScaRiskReport, authHeaders } = require('../server/sonar-client');
+const { fetchMeasuresHistory, fetchScaRiskReport, fetchRegulatoryZip, authHeaders } = require('../server/sonar-client');
 
 const server = { deployment: 'server', baseUrl: 'https://s.acme.com', projectKey: 'p', token: 'TKN' };
 
@@ -36,7 +36,19 @@ test('fetchMeasuresHistory merges paged history per metric', async () => {
 test('fetchScaRiskReport accepts bare array', async () => {
   const arr = [{ riskType: 'MALWARE', riskStatus: 'OPEN' }];
   const out = await fetchScaRiskReport(server, async () => ({ ok: true, status: 200, json: async () => arr }));
-  assert.strictEqual(out.length, 1);
+  assert.deepStrictEqual(out, [{ riskType: 'MALWARE', riskStatus: 'OPEN' }]);
+});
+
+test('fetchScaRiskReport with { risks: [...] } wrapper returns inner array', async () => {
+  const arr = [{ riskType: 'VULNERABILITY', riskStatus: 'OPEN' }];
+  const out = await fetchScaRiskReport(server, async () => ({ ok: true, status: 200, json: async () => ({ risks: arr }) }));
+  assert.deepStrictEqual(out, arr);
+});
+
+test('fetchScaRiskReport with { dependencyRisks: [...] } wrapper returns inner array', async () => {
+  const arr = [{ riskType: 'LICENSE', riskStatus: 'OPEN' }];
+  const out = await fetchScaRiskReport(server, async () => ({ ok: true, status: 200, json: async () => ({ dependencyRisks: arr }) }));
+  assert.deepStrictEqual(out, arr);
 });
 
 test('fetchScaRiskReport throws readable error on non-ok', async () => {
@@ -44,4 +56,17 @@ test('fetchScaRiskReport throws readable error on non-ok', async () => {
     () => fetchScaRiskReport(server, async () => ({ ok: false, status: 403, text: async () => 'Forbidden' })),
     /403/
   );
+});
+
+test('fetchRegulatoryZip returns Buffer with correct bytes and sends Authorization header', async () => {
+  let capturedOpts;
+  const fakeBytes = new Uint8Array([1, 2, 3]).buffer;
+  const fakeFetchImpl = async (url, opts) => {
+    capturedOpts = opts;
+    return { ok: true, status: 200, arrayBuffer: async () => fakeBytes };
+  };
+  const result = await fetchRegulatoryZip(server, 'main', fakeFetchImpl);
+  assert.ok(result instanceof Buffer);
+  assert.deepStrictEqual([...result], [1, 2, 3]);
+  assert.strictEqual(capturedOpts.headers.Authorization, 'Bearer TKN');
 });
