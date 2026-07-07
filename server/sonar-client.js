@@ -32,7 +32,7 @@ async function fetchMeasuresHistory(config, fromDate, fetchImpl = fetch) {
       }
     }
     const paging = data.paging;
-    if (!paging || !paging.pageSize || measures.length === 0 || paging.pageIndex * paging.pageSize >= paging.total) {
+    if (!paging || !paging.pageSize || measures.length === 0 || paging.pageIndex == null || paging.pageIndex * paging.pageSize >= paging.total) {
       break;
     }
     page += 1;

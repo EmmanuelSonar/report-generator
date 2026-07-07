@@ -70,3 +70,14 @@ test('fetchRegulatoryZip returns Buffer with correct bytes and sends Authorizati
   assert.deepStrictEqual([...result], [1, 2, 3]);
   assert.strictEqual(capturedOpts.headers.Authorization, 'Bearer TKN');
 });
+
+test('fetchMeasuresHistory terminates cleanly when paging is missing', async () => {
+  let callCount = 0;
+  const fakeFetchImpl = async (url, opts) => {
+    callCount += 1;
+    return { ok: true, status: 200, json: async () => ({ measures: [] }) };
+  };
+  const out = await fetchMeasuresHistory(server, '2026-01-01', fakeFetchImpl);
+  assert.deepStrictEqual(out, {});
+  assert.strictEqual(callCount, 1);
+});
