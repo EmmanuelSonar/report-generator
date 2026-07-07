@@ -12,6 +12,7 @@ function regulatoryReportUrl(config, branch) {
     : '/regulatory-reports/download';
   const params = new URLSearchParams({ project: config.projectKey });
   if (branch) params.set('branch', branch);
+  if (config.deployment === 'cloud' && config.organization) params.set('organization', config.organization);
   return `${b}${path}?${params.toString()}`;
 }
 
@@ -19,6 +20,7 @@ function scaRiskReportsUrl(config) {
   const b = base(config);
   const path = config.deployment === 'server' ? '/api/v2/sca/risk-reports' : '/sca/risk-reports';
   const params = new URLSearchParams({ component: config.projectKey });
+  if (config.deployment === 'cloud' && config.organization) params.set('organization', config.organization);
   return `${b}${path}?${params.toString()}`;
 }
 
@@ -31,6 +33,7 @@ function measuresHistoryUrl(config, fromDate, page) {
     p: String(page),
     ps: '500',
   });
+  if (config.deployment === 'cloud' && config.organization) params.set('organization', config.organization);
   return `${b}/api/measures/search_history?${params.toString()}`;
 }
 

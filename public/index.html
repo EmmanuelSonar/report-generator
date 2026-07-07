@@ -450,7 +450,7 @@
         regulatory:  $('regulatory').checked,
         maintenance: maintenance.checked,
       },
-      period:    $('period').value,
+      period:    maintenance.checked ? $('period').value : null,
       outputDir: fd.get('outputDir'),
     };
 

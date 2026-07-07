@@ -31,10 +31,8 @@ async function buildMaintenancePdf({ projectKey, period, history, now }) {
     const series = history[def.metric] || [];
     const png = renderLineChart({ title: def.title, series, color: def.color, width: 900, height: 260 });
     const img = await doc.embedPng(png);
-    const drawH = chartH;
-    const drawW = chartW;
-    y -= drawH;
-    page.drawImage(img, { x: PAGE.margin, y, width: drawW, height: drawH });
+    y -= chartH;
+    page.drawImage(img, { x: PAGE.margin, y, width: chartW, height: chartH });
     y -= 12;
   }
   return doc.save();

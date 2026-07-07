@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const AdmZip = require('adm-zip');
-const { PDFDocument, StandardFonts } = require('pdf-lib');
+const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 const { RATING_COLORS, SONAR, PAGE } = require('./pdf-style');
 const { computeScaRatings } = require('./sca');
 const { fetchRegulatoryZip, fetchScaRiskReport } = require('./sonar-client');
@@ -16,7 +16,7 @@ function extractSummaryPdf(zipBuffer) {
 function drawBadge(page, font, x, y, label, letter) {
   const size = 54;
   page.drawRectangle({ x, y: y - size, width: size, height: size, color: RATING_COLORS[letter] });
-  page.drawText(letter, { x: x + 16, y: y - size + 12, size: 34, font, color: require('pdf-lib').rgb(1, 1, 1) });
+  page.drawText(letter, { x: x + 16, y: y - size + 12, size: 34, font, color: rgb(1, 1, 1) });
   page.drawText(label, { x, y: y - size - 16, size: 11, font, color: SONAR.ink });
 }
 

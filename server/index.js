@@ -55,7 +55,11 @@ function openBrowser(url) {
   const cmd = process.platform === 'darwin' ? 'open'
     : process.platform === 'win32' ? 'cmd' : 'xdg-open';
   const args = process.platform === 'win32' ? ['/c', 'start', '', url] : [url];
-  try { spawn(cmd, args, { stdio: 'ignore', detached: true }).unref(); } catch (_) {}
+  try {
+    const child = spawn(cmd, args, { stdio: 'ignore', detached: true });
+    child.on('error', () => {});
+    child.unref();
+  } catch (_) {}
 }
 
 if (require.main === module) {

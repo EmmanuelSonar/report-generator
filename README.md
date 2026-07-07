@@ -13,12 +13,12 @@ npm install
 npm start
 ```
 Your browser opens to http://localhost:5173. Fill the form and click Generate.
-- **macOS:** double-click `start.command` (optional wrapper) or run `npm start`.
+- **macOS:** run `npm start`.
 - **Windows:** run `npm start` in a terminal.
 
-## API notes
-- SCA severity field: `severity` (INFO, LOW, MEDIUM, HIGH, BLOCKER).
-- Cloud regulatory report path confirmed as: `/regulatory-reports/download`.
+## API notes (UNVERIFIED ASSUMPTIONS -- pending live token verification)
+- SCA severity field is ASSUMED to be `severity` with values INFO/LOW/MEDIUM/HIGH/BLOCKER. Verify against a real risk-reports response; adjust `server/sca.js` (SEVERITY_RANK / severityOf) if different.
+- Cloud regulatory report path is ASSUMED to be `/regulatory-reports/download`. Verify with a real token; adjust `server/sonar-urls.js` if different.
 
 ## Tests
 ```bash
