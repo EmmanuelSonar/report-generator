@@ -42,7 +42,7 @@ Module responsibilities (each has one purpose and a small interface):
 
 Two things were built against **assumed** API shapes and are flagged in the README and code comments — verify against a live token and adjust if wrong:
 - **SCA severity field** (`server/sca.js`): assumed field `severity` with values INFO/LOW/MEDIUM/HIGH/BLOCKER. If the real risk-reports response differs, change only `severityOf` / `SEVERITY_RANK`.
-- **Cloud regulatory report path** (`server/sonar-urls.js`): assumed `/regulatory-reports/download`. Adjust `regulatoryReportUrl` if different.
+- ~~**Cloud regulatory report path**~~: VERIFIED. Cloud is `/enterprises/regulatory-reports` (`projectKey` + optional `branchKey`, no `organization`) and returns JSON `{ downloadLink }` — a presigned S3 URL fetched in a second **unauthenticated** request. Server is `/api/regulatory_reports/download` (`project` + optional `branchKey`, `Accept: application/zip`) and streams the zip directly. Both branches live in `regulatoryReportUrl` (`sonar-urls.js`) + `fetchRegulatoryZip` (`sonar-client.js`).
 
 `fetchScaRiskReport` already defensively unwraps several possible response shapes (bare array, or `{ risks | dependencyRisks | items }`).
 

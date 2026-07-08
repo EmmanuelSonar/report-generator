@@ -34,6 +34,7 @@ function validateRequest(body = {}) {
       baseUrl,
       projectKey: body.projectKey,
       organization: body.organization || '',
+      branch: (body.branch || '').trim(),
       wantReg, wantMaint, months,
       outputDir: body.outputDir,
     },

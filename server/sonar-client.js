@@ -40,15 +40,30 @@ async function fetchMeasuresHistory(config, fromDate, fetchImpl = fetch) {
   return result;
 }
 
-async function fetchRegulatoryZip(config, branch, fetchImpl = fetch) {
-  const url = regulatoryReportUrl(config, branch);
-  const res = await fetchImpl(url, { headers: authHeaders(config.token) });
+async function fetchZipBuffer(url, headers, fetchImpl) {
+  const res = await fetchImpl(url, headers ? { headers } : {});
   if (!res.ok) {
     const detail = res.text ? await res.text().catch(() => '') : '';
     throw new Error(`Regulatory report download failed: ${res.status} ${detail}`.trim());
   }
-  const buf = await res.arrayBuffer();
-  return Buffer.from(buf);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+async function fetchRegulatoryZip(config, branch, fetchImpl = fetch) {
+  const url = regulatoryReportUrl(config, branch);
+
+  if (config.deployment === 'server') {
+    // Server streams the zip directly from the authenticated endpoint.
+    return fetchZipBuffer(url, { ...authHeaders(config.token), Accept: 'application/zip' }, fetchImpl);
+  }
+
+  // Cloud returns JSON with a short-lived, presigned download link.
+  const meta = await getJson(url, config.token, fetchImpl);
+  const link = meta && meta.downloadLink;
+  if (!link) throw new Error('Regulatory report response did not include a download link.');
+  // The link is a presigned S3 URL: its signature only covers `host`, so it
+  // must be fetched WITHOUT the Sonar Authorization header.
+  return fetchZipBuffer(link, null, fetchImpl);
 }
 
 module.exports = { authHeaders, fetchScaRiskReport, fetchMeasuresHistory, fetchRegulatoryZip };

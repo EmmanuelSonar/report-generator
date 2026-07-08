@@ -40,3 +40,13 @@ test('server requires a baseUrl', () => {
   const r = validateRequest({ ...good, deployment: 'server', baseUrl: '' });
   assert.strictEqual(r.ok, false);
 });
+
+test('branch is optional and normalized to empty string when absent', () => {
+  const r = validateRequest(good);
+  assert.strictEqual(r.normalized.branch, '');
+});
+
+test('branch is trimmed and carried through when provided', () => {
+  const r = validateRequest({ ...good, branch: '  develop  ' });
+  assert.strictEqual(r.normalized.branch, 'develop');
+});

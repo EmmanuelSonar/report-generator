@@ -34,7 +34,7 @@ app.post('/api/generate', async (req, res) => {
 
   if (cfg.wantReg) {
     try {
-      const p = await generateRegulatoryReport({ config, outputDir: cfg.outputDir });
+      const p = await generateRegulatoryReport({ config, outputDir: cfg.outputDir, branch: cfg.branch });
       results.push({ report: 'regulatory', ok: true, path: p });
     } catch (e) {
       results.push({ report: 'regulatory', ok: false, error: e.message });

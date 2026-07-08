@@ -58,17 +58,51 @@ test('fetchScaRiskReport throws readable error on non-ok', async () => {
   );
 });
 
-test('fetchRegulatoryZip returns Buffer with correct bytes and sends Authorization header', async () => {
-  let capturedOpts;
+test('fetchRegulatoryZip (server) downloads the zip directly with Bearer + Accept: application/zip', async () => {
+  const calls = [];
   const fakeBytes = new Uint8Array([1, 2, 3]).buffer;
   const fakeFetchImpl = async (url, opts) => {
-    capturedOpts = opts;
+    calls.push({ url, opts });
     return { ok: true, status: 200, arrayBuffer: async () => fakeBytes };
   };
   const result = await fetchRegulatoryZip(server, 'main', fakeFetchImpl);
   assert.ok(result instanceof Buffer);
   assert.deepStrictEqual([...result], [1, 2, 3]);
-  assert.strictEqual(capturedOpts.headers.Authorization, 'Bearer TKN');
+  assert.strictEqual(calls.length, 1);
+  assert.match(calls[0].url, /\/api\/regulatory_reports\/download\?project=p&branchKey=main$/);
+  assert.strictEqual(calls[0].opts.headers.Authorization, 'Bearer TKN');
+  assert.strictEqual(calls[0].opts.headers.Accept, 'application/zip');
+});
+
+test('fetchRegulatoryZip (cloud) follows downloadLink with an unauthenticated second request', async () => {
+  const cloud = { deployment: 'cloud', baseUrl: 'https://api.sonarcloud.io', projectKey: 'p', token: 'TKN' };
+  const calls = [];
+  const fakeBytes = new Uint8Array([9, 8, 7]).buffer;
+  const fakeFetchImpl = async (url, opts) => {
+    calls.push({ url, opts });
+    if (url.includes('/enterprises/regulatory-reports')) {
+      return { ok: true, status: 200, json: async () => ({ downloadLink: 'https://s3.example/report.zip?sig=abc' }) };
+    }
+    return { ok: true, status: 200, arrayBuffer: async () => fakeBytes };
+  };
+  const result = await fetchRegulatoryZip(cloud, 'main', fakeFetchImpl);
+  assert.ok(result instanceof Buffer);
+  assert.deepStrictEqual([...result], [9, 8, 7]);
+  assert.strictEqual(calls.length, 2);
+  // step 1: metadata call, authenticated
+  assert.match(calls[0].url, /\/enterprises\/regulatory-reports\?projectKey=p&branchKey=main$/);
+  assert.strictEqual(calls[0].opts.headers.Authorization, 'Bearer TKN');
+  // step 2: presigned S3 download, must NOT carry the Sonar token
+  assert.strictEqual(calls[1].url, 'https://s3.example/report.zip?sig=abc');
+  assert.ok(!calls[1].opts || !calls[1].opts.headers || !calls[1].opts.headers.Authorization);
+});
+
+test('fetchRegulatoryZip (cloud) throws a readable error when no downloadLink is returned', async () => {
+  const cloud = { deployment: 'cloud', baseUrl: 'https://api.sonarcloud.io', projectKey: 'p', token: 'TKN' };
+  await assert.rejects(
+    () => fetchRegulatoryZip(cloud, 'main', async () => ({ ok: true, status: 200, json: async () => ({}) })),
+    /download link/i
+  );
 });
 
 test('fetchMeasuresHistory terminates cleanly when paging is missing', async () => {

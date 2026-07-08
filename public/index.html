@@ -354,6 +354,14 @@
                placeholder="my-organization"/>
       </div>
 
+      <div class="field">
+        <label class="field-label" for="branch">Branch
+          <span style="font-weight:400;color:var(--text-secondary);">(optional, defaults to main branch)</span>
+        </label>
+        <input type="text" id="branch" name="branch"
+               placeholder="main"/>
+      </div>
+
       <hr class="divider"/>
 
       <fieldset class="reports-fieldset">
@@ -446,6 +454,7 @@
       baseUrl:      baseUrl.value,
       projectKey:   fd.get('projectKey'),
       organization: fd.get('organization'),
+      branch:       fd.get('branch'),
       reports: {
         regulatory:  $('regulatory').checked,
         maintenance: maintenance.checked,

@@ -19,7 +19,12 @@ test('sca url routes by deployment', () => {
 
 test('regulatory url routes by deployment and trims trailing slash', () => {
   assert.strictEqual(regulatoryReportUrl(server), 'https://sonar.acme.com/api/regulatory_reports/download?project=my_proj');
-  assert.match(regulatoryReportUrl(cloud), /^https:\/\/api\.sonarcloud\.io\/.*project=my_proj/);
+  assert.strictEqual(regulatoryReportUrl(cloud), 'https://api.sonarcloud.io/enterprises/regulatory-reports?projectKey=my_proj');
+});
+
+test('regulatory url appends branchKey (not branch) when a branch is given', () => {
+  assert.strictEqual(regulatoryReportUrl(server, 'main'), 'https://sonar.acme.com/api/regulatory_reports/download?project=my_proj&branchKey=main');
+  assert.strictEqual(regulatoryReportUrl(cloud, 'develop'), 'https://api.sonarcloud.io/enterprises/regulatory-reports?projectKey=my_proj&branchKey=develop');
 });
 
 test('measures history url is same shape for both and includes metrics, from, page', () => {
@@ -31,10 +36,14 @@ test('measures history url is same shape for both and includes metrics, from, pa
   assert.match(u, /p=2/);
 });
 
-test('cloud with organization appends organization param to all three builders', () => {
-  assert.match(regulatoryReportUrl(cloudWithOrg), /organization=my_org/);
+test('cloud with organization appends organization param to sca and measures builders', () => {
   assert.match(scaRiskReportsUrl(cloudWithOrg), /organization=my_org/);
   assert.match(measuresHistoryUrl(cloudWithOrg, '2026-01-01', 1), /organization=my_org/);
+});
+
+test('regulatory url never appends organization (endpoint does not accept it)', () => {
+  assert.doesNotMatch(regulatoryReportUrl(cloudWithOrg), /organization=/);
+  assert.doesNotMatch(regulatoryReportUrl(cloudWithOrg, 'main'), /organization=/);
 });
 
 test('server with organization does NOT append organization param to any builder', () => {
